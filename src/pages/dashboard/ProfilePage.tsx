@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Business } from "@/lib/types";
 import { saveBusiness, getCurrentBusiness } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,20 +9,51 @@ import { Phone, Globe, Building, MapPin, Instagram, Facebook, MessageCircle } fr
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProfilePage() {
-  const { business } = useOutletContext<{ business: Business }>();
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const [form, setForm] = useState({
-    phone: business.phone,
-    address: business.address,
-    description: business.description,
-    socialLinks: { ...business.socialLinks },
+    phone: "",
+    address: "",
+    description: "",
+    socialLinks: { instagram: "", facebook: "", whatsapp: "" },
   });
 
-  const handleSave = () => {
+  useEffect(() => {
+    getCurrentBusiness()
+      .then(biz => {
+        if (biz) {
+          setBusiness(biz);
+          setForm({
+            phone: biz.phone,
+            address: biz.address,
+            description: biz.description,
+            socialLinks: { ...biz.socialLinks },
+          });
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    if (!business) return;
     const updated = { ...business, ...form };
-    saveBusiness(updated);
-    toast({ title: "Profile updated" });
+    try {
+      await saveBusiness(updated);
+      toast({ title: "Profile updated" });
+    } catch (err) {
+      console.error("Failed to save business profile", err);
+      toast({ title: "Failed to update profile", variant: "destructive" });
+    }
   };
+
+  if (loading || !business) {
+    return (
+      <div className="min-h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+        Loading profile...
+      </div>
+    );
+  }
 
   return (
     <div>

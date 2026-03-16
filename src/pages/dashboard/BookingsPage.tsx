@@ -1,12 +1,45 @@
-import { useOutletContext } from "react-router-dom";
-import { Business } from "@/lib/types";
-import { getBookings, getServices } from "@/lib/store";
+import { useEffect, useState } from "react";
+import { Business, Booking, Service } from "@/lib/types";
+import { getBookings, getServices, getCurrentBusiness } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function BookingsPage() {
-  const { business } = useOutletContext<{ business: Business }>();
-  const bookings = getBookings(business.id);
-  const services = getServices(business.id);
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
+
+  useEffect(() => {
+    getCurrentBusiness()
+      .then(biz => {
+        setBusiness(biz);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!business?.id) return;
+    (async () => {
+      try {
+        const [bks, svcs] = await Promise.all([
+          getBookings(business.id),
+          getServices(business.id),
+        ]);
+        setBookings(bks);
+        setServices(svcs);
+      } catch (err) {
+        console.error("Failed to load bookings data", err);
+      }
+    })();
+  }, [business?.id]);
+
+  if (loading || !business) {
+    return (
+      <div className="min-h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+        Loading bookings...
+      </div>
+    );
+  }
 
   const getServiceName = (serviceId: string) => services.find(s => s.id === serviceId)?.name || 'Unknown';
 

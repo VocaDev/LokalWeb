@@ -31,10 +31,14 @@ export default function RegisterPage() {
     socialLinks: { instagram: "", facebook: "", whatsapp: "" } as SocialLinks,
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.name || !form.subdomain || !form.industry) return;
-    registerBusiness(form);
-    navigate("/dashboard");
+    try {
+      await registerBusiness(form);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Failed to register business", err);
+    }
   };
 
   const updateSubdomain = (name: string) => {

@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { useOutletContext } from "react-router-dom";
-import { Business } from "@/lib/types";
+import { useEffect, useState } from "react";
+import { Business } from "@/lib.types";
 import { addGalleryImage, removeGalleryImage, getCurrentBusiness } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,29 +8,62 @@ import { Trash2, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function GalleryPage() {
-  const { business } = useOutletContext<{ business: Business }>();
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const [images, setImages] = useState<string[]>(business.galleryImages || []);
+  const [images, setImages] = useState<string[]>([]);
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    getCurrentBusiness()
+      .then(biz => {
+        setBusiness(biz);
+        if (biz?.galleryImages) {
+          setImages(biz.galleryImages);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       const url = reader.result as string;
-      addGalleryImage(business.id, url);
-      setImages(prev => [...prev, url]);
-      toast({ title: "Image added" });
+      (async () => {
+        try {
+          if (!business?.id) return;
+          await addGalleryImage(business.id, url);
+          setImages(prev => [...prev, url]);
+          toast({ title: "Image added" });
+        } catch (err) {
+          console.error("Failed to add gallery image", err);
+          toast({ title: "Failed to add image", variant: "destructive" });
+        }
+      })();
     };
     reader.readAsDataURL(file);
     e.target.value = "";
   };
 
-  const handleDelete = (url: string) => {
-    removeGalleryImage(business.id, url);
-    setImages(prev => prev.filter(u => u !== url));
+  const handleDelete = async (url: string) => {
+    try {
+      if (!business?.id) return;
+      await removeGalleryImage(business.id, url);
+      setImages(prev => prev.filter(u => u !== url));
+    } catch (err) {
+      console.error("Failed to remove gallery image", err);
+      toast({ title: "Failed to remove image", variant: "destructive" });
+    }
   };
 
+  if (loading || !business) {
+    return (
+      <div className="min-h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+        Loading gallery...
+      </div>
+    );
+  }
   return (
     <div>
       <div className="flex items-center justify-between mb-6">

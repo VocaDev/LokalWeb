@@ -91,13 +91,24 @@ export default function PublicBusinessPage() {
       setHours(demoHours);
       setBookings([]);
     } else {
-      const biz = getBusinessBySubdomain(subdomain);
-      if (biz) {
-        setBusiness(biz);
-        setServices(getServices(biz.id));
-        setHours(getBusinessHours(biz.id));
-        setBookings(getBookings(biz.id));
-      }
+      (async () => {
+        try {
+          const biz = await getBusinessBySubdomain(subdomain);
+          if (biz) {
+            setBusiness(biz);
+            const [svc, hrs, bks] = await Promise.all([
+              getServices(biz.id),
+              getBusinessHours(biz.id),
+              getBookings(biz.id),
+            ]);
+            setServices(svc);
+            setHours(hrs);
+            setBookings(bks);
+          }
+        } catch (err) {
+          console.error("Failed to load business data", err);
+        }
+      })();
     }
   }, [subdomain]);
 
@@ -117,17 +128,21 @@ export default function PublicBusinessPage() {
     setBooked(false);
   };
 
-  const confirmBooking = () => {
+  const confirmBooking = async () => {
     if (!business || !bookingService) return;
     const today = new Date().toISOString().split("T")[0];
-    addBooking(business.id, {
-      businessId: business.id,
-      serviceId: bookingService.id,
-      customerName,
-      customerPhone,
-      appointmentAt: `${today}T${selectedTime}:00`,
-    });
-    setBooked(true);
+    try {
+      await addBooking(business.id, {
+        businessId: business.id,
+        serviceId: bookingService.id,
+        customerName,
+        customerPhone,
+        appointmentAt: `${today}T${selectedTime}:00`,
+      });
+      setBooked(true);
+    } catch (err) {
+      console.error("Failed to create booking", err);
+    }
   };
 
   if (!business) {

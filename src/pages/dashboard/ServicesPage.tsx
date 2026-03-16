@@ -1,7 +1,6 @@
-import { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Business, Service } from "@/lib/types";
-import { updateService, deleteService, getServices } from "@/lib/store";
+import { updateService, deleteService, getServices, getCurrentBusiness } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,26 +9,66 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Pencil, Trash2 } from "lucide-react";
 
 export default function ServicesPage() {
-  const { business } = useOutletContext<{ business: Business }>();
-  const [services, setServices] = useState(() => getServices(business.id));
+  const [business, setBusiness] = useState<Business | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [services, setServices] = useState<Service[]>([]);
   const [editing, setEditing] = useState<Service | null>(null);
   const [open, setOpen] = useState(false);
 
-  const emptyService: Service = { id: "", businessId: business.id, name: "", description: "", price: 0, durationMinutes: 30 };
+  const emptyService: Service = { id: "", businessId: "", name: "", description: "", price: 0, durationMinutes: 30 };
 
-  const handleSave = (s: Service) => {
-    const svc = s.id ? s : { ...s, id: crypto.randomUUID() };
-    updateService(business.id, svc);
-    setServices(getServices(business.id));
-    setOpen(false);
-    setEditing(null);
+  useEffect(() => {
+    getCurrentBusiness()
+      .then(biz => {
+        setBusiness(biz);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => {
+    if (!business?.id) return;
+    (async () => {
+      try {
+        const data = await getServices(business.id);
+        setServices(data);
+      } catch (err) {
+        console.error("Failed to load services", err);
+      }
+    })();
+  }, [business?.id]);
+
+  const handleSave = async (s: Service) => {
+    if (!business?.id) return;
+    const svc = s.id ? s : { ...s, id: crypto.randomUUID(), businessId: business.id };
+    try {
+      await updateService(business.id, svc);
+      const updated = await getServices(business.id);
+      setServices(updated);
+      setOpen(false);
+      setEditing(null);
+    } catch (err) {
+      console.error("Failed to save service", err);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    deleteService(business.id, id);
-    setServices(getServices(business.id));
+  const handleDelete = async (id: string) => {
+    if (!business?.id) return;
+    try {
+      await deleteService(business.id, id);
+      const updated = await getServices(business.id);
+      setServices(updated);
+    } catch (err) {
+      console.error("Failed to delete service", err);
+    }
   };
 
+  if (loading || !business) {
+    return (
+      <div className="min-h-[200px] flex items-center justify-center text-muted-foreground text-sm">
+        Loading services...
+      </div>
+    );
+  }
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
