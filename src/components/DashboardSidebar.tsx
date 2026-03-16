@@ -1,4 +1,4 @@
-import { LayoutDashboard, Calendar, Scissors, User } from "lucide-react";
+import { LayoutDashboard, Calendar, Scissors, User, Clock, Image } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { Business } from "@/lib/types";
@@ -18,13 +18,14 @@ const items = [
   { title: "Overview", url: "/dashboard", icon: LayoutDashboard },
   { title: "Bookings", url: "/dashboard/bookings", icon: Calendar },
   { title: "Services", url: "/dashboard/services", icon: Scissors },
+  { title: "Business Hours", url: "/dashboard/hours", icon: Clock },
+  { title: "Gallery", url: "/dashboard/gallery", icon: Image },
   { title: "Profile", url: "/dashboard/profile", icon: User },
 ];
 
 export function DashboardSidebar({ business }: { business: Business }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const location = useLocation();
 
   return (
     <Sidebar collapsible="icon">

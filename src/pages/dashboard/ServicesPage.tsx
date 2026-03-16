@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router-dom";
 import { Business, Service } from "@/lib/types";
-import { updateService, deleteService, getCurrentBusiness } from "@/lib/store";
+import { updateService, deleteService, getServices } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,25 +11,23 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 
 export default function ServicesPage() {
   const { business } = useOutletContext<{ business: Business }>();
-  const [services, setServices] = useState(business.services);
+  const [services, setServices] = useState(() => getServices(business.id));
   const [editing, setEditing] = useState<Service | null>(null);
   const [open, setOpen] = useState(false);
 
-  const emptyService: Service = { id: "", name: "", price: 0, duration: 30 };
+  const emptyService: Service = { id: "", businessId: business.id, name: "", description: "", price: 0, durationMinutes: 30 };
 
   const handleSave = (s: Service) => {
     const svc = s.id ? s : { ...s, id: crypto.randomUUID() };
     updateService(business.id, svc);
-    const updated = getCurrentBusiness();
-    if (updated) setServices(updated.services);
+    setServices(getServices(business.id));
     setOpen(false);
     setEditing(null);
   };
 
   const handleDelete = (id: string) => {
     deleteService(business.id, id);
-    const updated = getCurrentBusiness();
-    if (updated) setServices(updated.services);
+    setServices(getServices(business.id));
   };
 
   return (
@@ -67,7 +65,7 @@ export default function ServicesPage() {
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold text-primary">€{s.price}</p>
-              <p className="text-sm text-muted-foreground">{s.duration} min</p>
+              <p className="text-sm text-muted-foreground">{s.durationMinutes} min</p>
             </CardContent>
           </Card>
         ))}
@@ -85,12 +83,16 @@ function ServiceForm({ service, onSave }: { service: Service; onSave: (s: Servic
         <Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
       </div>
       <div>
+        <Label>Description</Label>
+        <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
+      </div>
+      <div>
         <Label>Price (€)</Label>
         <Input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} />
       </div>
       <div>
         <Label>Duration (min)</Label>
-        <Input type="number" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: Number(e.target.value) }))} />
+        <Input type="number" value={form.durationMinutes} onChange={e => setForm(f => ({ ...f, durationMinutes: Number(e.target.value) }))} />
       </div>
       <Button className="w-full" onClick={() => onSave(form)}>Save</Button>
     </div>
