@@ -1,19 +1,24 @@
 import { useOutletContext } from "react-router-dom";
 import { Business } from "@/lib/types";
+import { getBookings, getServices } from "@/lib/store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Clock, AlertCircle } from "lucide-react";
 
 export default function OverviewPage() {
   const { business } = useOutletContext<{ business: Business }>();
+  const bookings = getBookings(business.id);
+  const services = getServices(business.id);
   const today = new Date().toISOString().split("T")[0];
-  const todayBookings = business.bookings.filter(b => b.date === today);
-  const pending = business.bookings.filter(b => b.status === "pending").length;
+  const todayBookings = bookings.filter(b => b.appointmentAt.startsWith(today));
+  const pending = bookings.filter(b => b.status === "pending").length;
 
   const stats = [
     { label: "Today's Bookings", value: todayBookings.length, icon: Calendar, color: "text-primary" },
-    { label: "This Week", value: business.bookings.length, icon: Clock, color: "text-primary" },
+    { label: "This Week", value: bookings.length, icon: Clock, color: "text-primary" },
     { label: "Pending", value: pending, icon: AlertCircle, color: "text-warning" },
   ];
+
+  const getServiceName = (serviceId: string) => services.find(s => s.id === serviceId)?.name || 'Unknown';
 
   return (
     <div>
@@ -37,19 +42,22 @@ export default function OverviewPage() {
           <CardTitle className="text-lg">Recent Bookings</CardTitle>
         </CardHeader>
         <CardContent>
-          {business.bookings.length === 0 ? (
+          {bookings.length === 0 ? (
             <p className="text-muted-foreground text-sm">No bookings yet.</p>
           ) : (
             <div className="space-y-3">
-              {business.bookings.slice(0, 5).map(b => (
-                <div key={b.id} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <div>
-                    <p className="font-medium text-foreground text-sm">{b.customerName}</p>
-                    <p className="text-xs text-muted-foreground">{b.serviceName} · {b.date} at {b.time}</p>
+              {bookings.slice(0, 5).map(b => {
+                const dt = new Date(b.appointmentAt);
+                return (
+                  <div key={b.id} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <div>
+                      <p className="font-medium text-foreground text-sm">{b.customerName}</p>
+                      <p className="text-xs text-muted-foreground">{getServiceName(b.serviceId)} · {dt.toLocaleDateString()} at {dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                    <StatusBadge status={b.status} />
                   </div>
-                  <StatusBadge status={b.status} />
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>
@@ -63,6 +71,7 @@ function StatusBadge({ status }: { status: string }) {
     confirmed: "bg-success/10 text-success",
     pending: "bg-warning/10 text-warning",
     cancelled: "bg-destructive/10 text-destructive",
+    completed: "bg-primary/10 text-primary",
   };
   return (
     <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${styles[status] || ""}`}>

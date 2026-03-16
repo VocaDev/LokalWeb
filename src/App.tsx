@@ -10,6 +10,8 @@ import OverviewPage from "./pages/dashboard/OverviewPage";
 import BookingsPage from "./pages/dashboard/BookingsPage";
 import ServicesPage from "./pages/dashboard/ServicesPage";
 import ProfilePage from "./pages/dashboard/ProfilePage";
+import BusinessHoursPage from "./pages/dashboard/BusinessHoursPage";
+import GalleryPage from "./pages/dashboard/GalleryPage";
 import PublicBusinessPage from "./pages/PublicBusinessPage";
 import NotFound from "./pages/NotFound";
 
@@ -28,6 +30,8 @@ const App = () => (
             <Route index element={<OverviewPage />} />
             <Route path="bookings" element={<BookingsPage />} />
             <Route path="services" element={<ServicesPage />} />
+            <Route path="hours" element={<BusinessHoursPage />} />
+            <Route path="gallery" element={<GalleryPage />} />
             <Route path="profile" element={<ProfilePage />} />
           </Route>
           <Route path="/biz/:subdomain" element={<PublicBusinessPage />} />
