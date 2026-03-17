@@ -297,7 +297,7 @@ Built over 13 weeks as a university Software Engineering project.
 
 ## Author
 
-Built by **VocaDev** — second year Software Engineering student — as a university project with the ambition of becoming a real product for the Kosovo market.
+Built by **Gentian Voca** — second year Software Engineering student — as a university project with the ambition of becoming a real product for the Kosovo market.
 
 ---
 
