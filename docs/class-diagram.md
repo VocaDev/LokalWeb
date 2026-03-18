@@ -154,7 +154,7 @@ All four entities interact with Supabase through a consistent set of database op
 - All entities are defined as TypeScript `interface` types in `src/lib/types.ts`
 - All data operations are implemented as async functions in `src/lib/store.ts`
 - camelCase TypeScript fields (`businessId`, `logoUrl`) map to snake_case PostgreSQL columns (`business_id`, `logo_url`) via `toSnakeBusiness()` and `fromSnakeBusiness()` helper functions
-- The `SupabaseRepository` interface represents the Repository Pattern applied to this project — each entity's CRUD operations follow the same structural contract even though they are implemented as standalone functions rather than class methods, which is idiomatic in modern TypeScript/React architecture
+- `store.ts` implements the **Repository Pattern** — it is the repository layer for all four entities. The `SupabaseRepository` interface in the diagram above formally documents the contract (`getAll`, `getById`, `add`, `save`, `delete`) across `Business`, `Service`, `BusinessHours`, and `Booking`. The implementation uses standalone async functions rather than classes, which is idiomatic in modern TypeScript/React architecture — the pattern is the same, only the syntax differs from a class-based implementation.
 
 ---
 

@@ -85,6 +85,18 @@ All other layers import from this file. It is the single source of truth for dat
 
 Contains all functions that read from and write to Supabase. Organized by entity:
 
+**Repository Pattern**
+
+`store.ts` is the repository layer of LokalWeb. It implements the Repository Pattern by providing a consistent CRUD contract across all four entities — without any UI component or page ever touching Supabase directly. The pattern is implemented as standalone async functions rather than classes, which is the idiomatic approach in modern TypeScript and React architecture. The contract across all entities is:
+
+- `getAll` → `getBusinesses()`, `getServices(businessId)`, `getBookings(businessId)`, `getBusinessHours(businessId)`
+- `getById` → `getBusinessBySubdomain(subdomain)`, `getCurrentBusiness()`
+- `add` → `registerBusiness()`, `addBooking()`, `addGalleryImage()`
+- `save / update` → `saveBusiness()`, `updateService()`, `saveBusinessHours()`
+- `delete` → `deleteService()`, `removeGalleryImage()`
+
+This abstraction means the rest of the application is completely decoupled from the database. If Supabase were replaced with a different backend tomorrow, only this file would change.
+
 **Business operations:**
 
 - `getBusinesses()` — fetch all businesses
