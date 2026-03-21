@@ -34,6 +34,7 @@ function toSnakeBusiness(b: Business) {
     accent_color: b.accentColor,
     social_links: b.socialLinks ?? { instagram: "", facebook: "", whatsapp: "" },
     gallery_images: b.galleryImages ?? [],
+    owner_id: b.ownerId,
     created_at: b.createdAt,
   };
 }
@@ -51,6 +52,7 @@ function fromSnakeBusiness(row: any): Business {
     accentColor: row.accent_color,
     socialLinks: row.social_links ?? { instagram: "", facebook: "", whatsapp: "" },
     galleryImages: row.gallery_images ?? [],
+    ownerId: row.owner_id,
     createdAt: row.created_at,
   };
 }
@@ -99,16 +101,50 @@ export async function getBusinessBySubdomain(subdomain: string): Promise<Busines
   return data ? fromSnakeBusiness(data) : null;
 }
 
+export async function checkSubdomainAvailability(subdomain: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('businesses')
+    .select('id')
+    .eq('subdomain', subdomain)
+    .maybeSingle();
+
+  if (error) {
+    console.error('[Supabase] Error checking subdomain availability', error.message);
+    return false;
+  }
+
+  return !data;
+}
+
 export async function getCurrentBusiness(): Promise<Business | null> {
-  const id = localStorage.getItem('lokalweb_current');
+  let id = localStorage.getItem('lokalweb_current');
+  
+  if (!id) {
+    // Try to get the first business owned by the current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data, error } = await supabase
+      .from('businesses')
+      .select('id')
+      .eq('owner_id', user.id)
+      .maybeSingle();
+    
+    if (error || !data) return null;
+    id = data.id as string;
+    localStorage.setItem('lokalweb_current', id as string);
+  }
+
   if (!id) return null;
+
   const { data, error } = await supabase
     .from('businesses')
     .select('*')
-    .eq('id', id)
+    .eq('id', id as string)
     .maybeSingle();
+
   if (error) {
-    console.error('[Supabase] Error fetching current business', error.message, error.details, error.hint);
+    console.error('[Supabase] Error fetching current business', error.message);
     return null;
   }
   return data ? fromSnakeBusiness(data) : null;
@@ -396,7 +432,7 @@ const mockBookingTemplates = [
 // }
 
 export async function registerBusiness(
-  data: Omit<Business, 'id' | 'createdAt' | 'galleryImages'> & { galleryImages?: string[] }
+  data: Omit<Business, 'id' | 'createdAt' | 'galleryImages'> & { galleryImages?: string[], ownerId: string }
 ): Promise<Business> {
   const business: Business = {
     ...data,

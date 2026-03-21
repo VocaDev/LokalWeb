@@ -47,5 +47,6 @@ export interface Business {
   accentColor: string;
   socialLinks: SocialLinks;
   galleryImages: string[];
+  ownerId?: string;
   createdAt: string;
 }

@@ -1,8 +1,10 @@
-import { LayoutDashboard, Calendar, Scissors, User, Clock, Image } from "lucide-react";
+import { LayoutDashboard, Calendar, Scissors, User, Clock, Image, LogOut, Loader2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Business } from "@/lib/types";
 import { getCurrentBusiness } from "@/lib/store";
+import { createClient } from "@/lib/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -27,13 +29,23 @@ const items = [
 export function DashboardSidebar({ business }: { business: Business }) {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const router = useRouter();
+  const supabase = createClient();
   const [subdomain, setSubdomain] = useState<string | null>(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   useEffect(() => {
     getCurrentBusiness().then(biz => {
       if (biz?.subdomain) setSubdomain(biz.subdomain);
     });
   }, []);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   return (
     <Sidebar collapsible="icon">
@@ -69,18 +81,30 @@ export function DashboardSidebar({ business }: { business: Business }) {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {!collapsed && subdomain && (
-          <div className="mt-auto p-4 border-t">
+        <div className="mt-auto p-4 border-t space-y-2">
+          {!collapsed && subdomain && (
             <a
               href={`/${subdomain}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm text-primary hover:underline font-medium"
+              className="flex items-center gap-2 text-sm text-primary hover:underline font-medium px-2 py-1"
             >
-              View my website
+              <Image className="h-4 w-4" /> View my website
             </a>
-          </div>
-        )}
+          )}
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-destructive font-medium px-2 py-1 transition-colors w-full"
+          >
+            {loggingOut ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="h-4 w-4" />
+            )}
+            {!collapsed && <span>Logout</span>}
+          </button>
+        </div>
       </SidebarContent>
     </Sidebar>
   );

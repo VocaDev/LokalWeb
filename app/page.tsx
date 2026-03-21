@@ -44,7 +44,18 @@ export default function LandingPage() {
             </div>
             <span className="font-bold text-lg text-foreground">LokalWeb</span>
           </div>
-          <Button onClick={() => router.push("/register")} size="sm">Get Started</Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => router.push("/login")}
+            >
+              Log In
+            </Button>
+            <Button onClick={() => router.push("/register")} size="sm">
+              Get Started
+            </Button>
+          </div>
         </div>
       </nav>
 
