@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/middleware'
 export async function middleware(request: NextRequest) {
   const { supabase, supabaseResponse } = createClient(request)
 
-  // Always refresh the session
+  // Always refresh the session first (required by @supabase/ssr)
   const { data: { user } } = await supabase.auth.getUser()
 
   const hostname = request.headers.get('host') || ''
@@ -12,9 +12,11 @@ export async function middleware(request: NextRequest) {
   const isLocalhost = hostname.includes('localhost')
   const isMainDomain = subdomain === 'www' || subdomain === 'lokalweb' || isLocalhost
 
-  // Handle dashboard protection on main domain
-  if (isMainDomain && request.nextUrl.pathname.startsWith('/dashboard')) {
-    if (!user) {
+  // Handle auth routing on main domain
+  if (isMainDomain) {
+    const isDashboard = request.nextUrl.pathname.startsWith('/dashboard')
+
+    if (isDashboard && !user) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }

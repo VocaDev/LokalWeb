@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { Business, Service, BusinessHours } from '@/lib/types'
 import { Clock, Plus, Shield, Heart, Phone } from 'lucide-react'
 import HoursSection from './shared/HoursSection'
 import ContactSection from './shared/ContactSection'
+import BookingDrawer from '@/components/templates/shared/BookingDrawer'
 
 type Props = {
   business: Business
@@ -22,6 +24,14 @@ function isCurrentlyOpen(hours: BusinessHours[]): boolean {
 export default function ClinicTemplate({ business, services, hours }: Props) {
   const open = isCurrentlyOpen(hours)
 
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerService, setDrawerService] = useState<Service | null>(null)
+
+  const openBooking = (service?: Service) => {
+    setDrawerService(service ?? null)
+    setDrawerOpen(true)
+  }
+
   const handleScroll = (elementId: string) => {
     document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -37,7 +47,7 @@ export default function ClinicTemplate({ business, services, hours }: Props) {
           </span>
         </div>
         <button
-          onClick={() => handleScroll('contact')}
+          onClick={() => openBooking()}
           className="text-white font-semibold rounded-lg px-5 py-2 text-sm transition-all hover:opacity-90"
           style={{ backgroundColor: business.accentColor }}
         >
@@ -89,7 +99,7 @@ export default function ClinicTemplate({ business, services, hours }: Props) {
               Our Services
             </button>
             <button
-              onClick={() => handleScroll('contact')}
+              onClick={() => openBooking()}
               className="text-white font-semibold rounded-lg px-6 py-3 transition-all hover:opacity-90"
               style={{ backgroundColor: business.accentColor }}
             >
@@ -153,7 +163,7 @@ export default function ClinicTemplate({ business, services, hours }: Props) {
                       <span className="text-xs text-[#5a5a7a]">{service.durationMinutes} min consultation</span>
                     </div>
                     <button
-                      onClick={() => handleScroll('contact')}
+                      onClick={() => openBooking(service)}
                       className="border border-[rgba(120,120,255,0.22)] text-[#e8e8f0] text-sm rounded-lg px-4 py-1.5 hover:bg-[#1e1e35] transition-colors"
                     >
                       Book
@@ -269,6 +279,15 @@ export default function ClinicTemplate({ business, services, hours }: Props) {
           </a>
         </p>
       </footer>
+
+      <BookingDrawer
+        business={business}
+        services={services}
+        hours={hours}
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        initialService={drawerService}
+      />
     </div>
   )
 }

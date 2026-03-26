@@ -1,9 +1,11 @@
 'use client'
 
+import { useState } from 'react'
 import { Business, Service, BusinessHours } from '@/lib/types'
 import { Clock, Phone, Calendar } from 'lucide-react'
 import HoursSection from './shared/HoursSection'
 import ContactSection from './shared/ContactSection'
+import BookingDrawer from '@/components/templates/shared/BookingDrawer'
 
 type Props = {
   business: Business
@@ -22,6 +24,14 @@ function isCurrentlyOpen(hours: BusinessHours[]): boolean {
 export default function RestaurantTemplate({ business, services, hours }: Props) {
   const open = isCurrentlyOpen(hours)
 
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerService, setDrawerService] = useState<Service | null>(null)
+
+  const openBooking = (service?: Service) => {
+    setDrawerService(service ?? null)
+    setDrawerOpen(true)
+  }
+
   const handleScroll = (elementId: string) => {
     document.getElementById(elementId)?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -32,7 +42,7 @@ export default function RestaurantTemplate({ business, services, hours }: Props)
       <nav className="sticky top-0 z-50 bg-[#0a0a0f]/90 backdrop-blur-md border-b border-[rgba(120,120,255,0.12)] h-16 flex items-center justify-between px-6">
         <h1 className="text-lg font-bold text-[#e8e8f0]">{business.name}</h1>
         <button
-          onClick={() => handleScroll('contact')}
+          onClick={() => openBooking()}
           className="text-white font-semibold rounded-lg px-5 py-2 text-sm transition-all hover:opacity-90"
           style={{ backgroundColor: business.accentColor }}
         >
@@ -80,7 +90,7 @@ export default function RestaurantTemplate({ business, services, hours }: Props)
               View Menu
             </button>
             <button
-              onClick={() => handleScroll('contact')}
+              onClick={() => openBooking()}
               className="text-white font-semibold rounded-lg px-7 py-3 transition-all hover:opacity-90"
               style={{ backgroundColor: business.accentColor }}
             >
@@ -208,6 +218,15 @@ export default function RestaurantTemplate({ business, services, hours }: Props)
           </a>
         </p>
       </footer>
+
+      <BookingDrawer
+        business={business}
+        services={services}
+        hours={hours}
+        isOpen={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        initialService={drawerService}
+      />
     </div>
   )
 }

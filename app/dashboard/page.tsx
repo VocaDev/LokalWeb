@@ -27,8 +27,8 @@ export default function OverviewPage() {
           getBookings(business.id),
           getServices(business.id),
         ]);
-        setBookings(bks);
-        setServices(svcs);
+        setBookings(bks || []);
+        setServices(svcs || []);
       } catch (err) {
         console.error("Failed to load overview data", err);
       }
@@ -42,13 +42,15 @@ export default function OverviewPage() {
       </div>
     );
   }
+
   const today = new Date().toISOString().split("T")[0];
-  const todayBookings = bookings.filter(b => b.appointmentAt.startsWith(today));
-  const pending = bookings.filter(b => b.status === "pending").length;
+  const todayBookings = (bookings || []).filter(b => b?.appointmentAt?.startsWith(today));
+  const pending = (bookings || []).filter(b => b?.status === "pending").length;
+  const totalBookings = (bookings || []).length;
 
   const stats = [
     { label: "Today's Bookings", value: todayBookings.length, icon: Calendar, color: "text-primary" },
-    { label: "This Week", value: bookings.length, icon: Clock, color: "text-primary" },
+    { label: "This Week", value: totalBookings, icon: Clock, color: "text-primary" },
     { label: "Pending", value: pending, icon: AlertCircle, color: "text-warning" },
   ];
 
@@ -76,11 +78,11 @@ export default function OverviewPage() {
           <CardTitle className="text-lg">Recent Bookings</CardTitle>
         </CardHeader>
         <CardContent>
-          {bookings.length === 0 ? (
+          {(bookings || []).length === 0 ? (
             <p className="text-muted-foreground text-sm">No bookings yet.</p>
           ) : (
             <div className="space-y-3">
-              {bookings.slice(0, 5).map(b => {
+              {(bookings || []).slice(0, 5).map(b => {
                 const dt = new Date(b.appointmentAt);
                 return (
                   <div key={b.id} className="flex items-center justify-between py-2 border-b last:border-0">
@@ -113,4 +115,3 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
-

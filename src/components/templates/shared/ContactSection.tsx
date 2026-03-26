@@ -2,15 +2,47 @@
 
 import { Business } from '@/lib/types'
 import { Phone, MapPin, MessageCircle, Instagram, Facebook } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface ContactSectionProps {
   business: Business
 }
 
 export default function ContactSection({ business }: ContactSectionProps) {
+  const [mapUrl, setMapUrl] = useState<string | null>(null)
+
   const whatsappUrl = business.socialLinks?.whatsapp
     ? `https://wa.me/${business.socialLinks.whatsapp.replace(/[^0-9]/g, '')}`
     : undefined
+
+  useEffect(() => {
+    if (!business.address) return
+
+    // Use Nominatim (free OpenStreetMap geocoding) to get coordinates from address
+    const geocode = async () => {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(business.address)}&limit=1`,
+          { headers: { 'Accept-Language': 'en' } }
+        )
+        const results = await res.json()
+        if (results && results.length > 0) {
+          const { lat, lon } = results[0]
+          const latNum = parseFloat(lat)
+          const lonNum = parseFloat(lon)
+          const delta = 0.005
+          const bbox = `${lonNum - delta},${latNum - delta},${lonNum + delta},${latNum + delta}`
+          setMapUrl(
+            `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lon}`
+          )
+        }
+      } catch (err) {
+        console.error('Geocoding failed:', err)
+      }
+    }
+
+    geocode()
+  }, [business.address])
 
   return (
     <div>
@@ -72,16 +104,20 @@ export default function ContactSection({ business }: ContactSectionProps) {
 
         {/* Right Column - Map */}
         <div className="bg-[#151522] border border-[rgba(120,120,255,0.12)] rounded-xl overflow-hidden h-56">
-          <iframe
-            title="Map"
-            src={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-              business.address ?? ''
-            )}`}
-            width="100%"
-            height="100%"
-            style={{ border: 0 }}
-            loading="lazy"
-          />
+          {mapUrl ? (
+            <iframe
+              title="Map"
+              src={mapUrl}
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full text-[#5a5a7a] text-sm">
+              {business.address ? 'Loading map...' : 'No address provided'}
+            </div>
+          )}
         </div>
       </div>
     </div>

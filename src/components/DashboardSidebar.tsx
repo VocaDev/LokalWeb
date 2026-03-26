@@ -1,9 +1,8 @@
 import { LayoutDashboard, Calendar, Scissors, User, Clock, Image, LogOut, Loader2 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Business } from "@/lib/types";
-import { getCurrentBusiness } from "@/lib/store";
 import { createClient } from "@/lib/supabase/client";
 import {
   Sidebar,
@@ -31,14 +30,8 @@ export function DashboardSidebar({ business }: { business: Business }) {
   const collapsed = state === "collapsed";
   const router = useRouter();
   const supabase = createClient();
-  const [subdomain, setSubdomain] = useState<string | null>(null);
+  const subdomain = business?.subdomain || null;
   const [loggingOut, setLoggingOut] = useState(false);
-
-  useEffect(() => {
-    getCurrentBusiness().then(biz => {
-      if (biz?.subdomain) setSubdomain(biz.subdomain);
-    });
-  }, []);
 
   const handleLogout = async () => {
     setLoggingOut(true);

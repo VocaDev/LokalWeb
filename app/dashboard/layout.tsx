@@ -14,14 +14,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   useEffect(() => {
     getCurrentBusiness().then(biz => {
-      if (!biz) {
-        router.push("/register");
-      } else {
-        setBusiness(biz);
-      }
+      setBusiness(biz);
     }).catch(err => {
       console.error(err);
-      router.push("/register");
+      // No automatic redirect to avoid loops
     });
   }, [router, pathname]);
 

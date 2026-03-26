@@ -117,41 +117,49 @@ export async function checkSubdomainAvailability(subdomain: string): Promise<boo
 }
 
 export async function getCurrentBusiness(): Promise<Business | null> {
-  let id = localStorage.getItem('lokalweb_current');
-  
-  if (!id) {
-    // Try to get the first business owned by the current user
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
-
-    const { data, error } = await supabase
-      .from('businesses')
-      .select('id')
-      .eq('owner_id', user.id)
-      .maybeSingle();
-    
-    if (error || !data) return null;
-    id = data.id as string;
-    localStorage.setItem('lokalweb_current', id as string);
-  }
-
-  if (!id) return null;
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
 
   const { data, error } = await supabase
     .from('businesses')
     .select('*')
-    .eq('id', id as string)
+    .eq('owner_id', user.id)
+    .limit(1)
     .maybeSingle();
 
   if (error) {
-    console.error('[Supabase] Error fetching current business', error.message);
+    console.error('[Supabase] getCurrentBusiness error:', error.message, error.code, error.hint);
     return null;
   }
-  return data ? fromSnakeBusiness(data) : null;
+
+  if (data) return fromSnakeBusiness(data);
+
+  // Fallback for older businesses where owner_id might be NULL
+  if (typeof window !== 'undefined') {
+    const legacyId = localStorage.getItem('lokalweb_current');
+    if (legacyId) {
+      const { data: legacyData, error: legacyError } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('id', legacyId)
+        .maybeSingle();
+      
+      if (legacyError) {
+        console.error('[Supabase] getCurrentBusiness legacy fallback error:', legacyError.message);
+        return null;
+      }
+      return legacyData ? fromSnakeBusiness(legacyData) : null;
+    }
+  }
+
+  return null;
 }
 
 export function setCurrentBusiness(id: string): void {
-  localStorage.setItem('lokalweb_current', id);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('lokalweb_current', id);
+  }
 }
 
 // ── Services ──
@@ -432,13 +440,18 @@ const mockBookingTemplates = [
 // }
 
 export async function registerBusiness(
-  data: Omit<Business, 'id' | 'createdAt' | 'galleryImages'> & { galleryImages?: string[], ownerId: string }
+  data: Omit<Business, 'id' | 'createdAt' | 'galleryImages'> & { galleryImages?: string[] }
 ): Promise<Business> {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
   const business: Business = {
     ...data,
     id: crypto.randomUUID(),
     galleryImages: data.galleryImages || [],
     createdAt: new Date().toISOString(),
+    ownerId: user.id,
   };
 
   // 1) Insert business

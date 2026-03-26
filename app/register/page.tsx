@@ -316,6 +316,10 @@ export default function RegisterPage() {
                   <Label htmlFor="phone">Phone (Kosovo)</Label>
                   <Input id="phone" value={form.phone} onChange={e => setForm(f => ({ ...f, phone: e.target.value }))} placeholder="+38349123123" />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Input id="address" value={form.address} onChange={e => setForm(f => ({ ...f, address: e.target.value }))} placeholder="e.g. Rr. Agim Ramadani, Prishtinë" />
+                </div>
               </div>
 
               <Button
@@ -401,6 +405,7 @@ export default function RegisterPage() {
                   { label: "Subdomain", value: `${form.subdomain}.lokalweb.com`, color: "text-primary font-medium" },
                   { label: "Industry", value: form.industry.replace("-", " "), className: "capitalize" },
                   { label: "Phone", value: form.phone || "—" },
+                  { label: "Address", value: form.address || "—" },
                 ].map((item, i) => (
                   <div key={i} className="flex justify-between py-2 border-b">
                     <span className="text-muted-foreground">{item.label}</span>
